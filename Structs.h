@@ -7,43 +7,46 @@
 #ifndef STRUCTS_H
 #define	STRUCTS_H
 using namespace std;
-#include <iostream>
 #include <string>
 
-    struct Input{
-        double data;
+    struct Training_Data{
+        double data =0;
+        double time_information =0; 
     };
-    struct ini{
-        int innum;              //number of total inputs
-        int hid_neur;           //number of hidden neurons
-        int layers;             //number of hidden neuron layers
-        int wtqt;
-        int popsize;            //initial genetic population size
-        int gen_cycle;           //number of iterations of the genetics function
-        int error_ok;             //if our error is lower than this value, break.
-        int data_size;
-    };
-    struct probability{
-        double prob_genesplit_avg;  //probability of the childs DNA being averaged from the parents
-        double prob_genesplit_add;  //probability of the child's DNA being created from the parents genes added together
-        double prob_genesplit_sub; //probability of the parent 1 subtracting from parent 2 to create child
-        double prob_genesplit_parallel; //probability of the parents being added and divided by the multiplication
-        double prob_mutation;     //probability of mutation per reproduction
-        double RNG_SD;          //standard deviaviation of the random values
-        double lamda;           //rate of decay of overall population, lower = slower pop decrease
-    }prob;
-    struct individual{
-        double sfitness;          //scaled fitness score for the particular individual (comes from RMS)
-        double weight;
-        string genename;               //name of the gene (what it effects)
-        bool eligible_rep;        //whether this individual is eligible for reproduction 
-        bool eligible_sort;       //whether this individual is eligible for sorting
-        int order;              //order 
+    struct Genetic_Parameters{
+        int popsize =0;                    //initial genetic population size
+        int gen_cycle =0;                   //number of iterations of the genetics function
+        int error_ok =0;                   //if our error is lower than this value, break.
     };
     
-    struct parent{
-        double gene;
-        bool parentnum;         // false = parent 1, true = parent 2
+    struct NeuralNetwork_Parameters{     // always only 1 hidden layer, assume layers ==1 and for multiple layers we will be using multiple networks, anything else is dumb.
+        int I_num =0;                     //number of total inputs
+        int O_num =0;                      //number of total outputs
+        int training_data_length =0;       //how many individual training data steps there are
+        int hidden_neurons =0;                   //number of hidden neurons
+        int contextual_neurons =0;         //number of contextual neurons (IE neurons that remember previous states)
+        int wtqt =0;                       //number of weights, created by NeuralNetworkFab)
+        int training_verify_percentage =0.5;    // percentage of total training data used for training, with the rest for verification, 50% default
+    };
+    
+    struct Probability_Parameters{
+        double prob_genesplit_avg =0;       //probability of the childs DNA being averaged from the parents
+        double prob_genesplit_add =0;      //probability of the child's DNA being created from the parents genes added together
+        double prob_genesplit_sub =0;      //probability of the parent 1 subtracting from parent 2 to create child
+        double prob_genesplit_parallel =0; //probability of the parents being added and divided by the multiplication
+        double prob_mutation =0;           //probability of mutation per reproduction
+        double RNG_SD =0;                  //standard deviaviation of the random values
+        double lamda =0;                   //rate of decay of overall population, lower = slower pop decrease
+    };
+    struct Weights{
+        double sfitness =0;          //scaled fitness score for the particular individual (comes from RMS)
+        double weight =0;
+        bool eligible_rep =0;        //whether this individual is eligible for reproduction 
+    };
+    
+    struct Parent{
+        double gene =0;
+        bool parentnum =0;         // false = parent 1, true = parent 2
         
     };
     
