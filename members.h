@@ -16,84 +16,103 @@
 
    
     
-    Neural::Neural(int input_quantity, int hidden_neurons, int layers,
-            int initial_population_size, int probability_of_mutation, int number_of_generations, int error_ok)
+   void Dash_Board::TrainingDataInitializer(double data, int IO_number, bool IO_indicator, double time)
     {
-        ini1.layers = layers;
-        ini1.gen_cycle = number_of_generations;
-        ini1.hid_neur = hidden_neurons;
-        ini1.popsize = initial_population_size;
-        ini1.innum=input_quantity;
-        ini1.error_ok=error_ok;
-        prob.RNG_SD=15;
-        prob.lamda=20;
-        prob.prob_genesplit_add=0.5;
-        prob.prob_genesplit_avg=0.7;
-        prob.prob_genesplit_parallel=0.5;
-        prob.prob_genesplit_sub=0.5;
-        if(ini1.layers==1)
-            {
-                if(ini1.hid_neur>0)
-                {
-                    ini1.wtqt=(ini1.innum+1)*ini1.hid_neur+(ini1.hid_neur+1);
-                }
-                else
-                {
-                    ini1.wtqt=ini1.innum+1;
-                }
-            }
-            if(ini1.layers==2)
-            {
-                ini1.wtqt=ini1.innum*ini1.hid_neur+2+ini1.layers*ini1.hid_neur;
-            }
+        if(IO_indicator)                // if true, this is an input
+        {
+            Input[IO_number].data = data;
+            Input[IO_number].time_information = time;
+        }
+        else                            // if it isn't true, its an output
+        {
+            Output[IO_number].data = data;
+            Output[IO_number].time_information = time;
+        }
     }
     
-
-void Neural::prepare()
+   void Dash_Board::CreateStructures(NeuralNetwork_Parameters tNN, Probability_Parameters tProb, Genetic_Parameters tGene, IO_array Input, IO_array Output)
     {
-    double values[] ={0.0,0.0,0.0,1.0,1.0,0.0,1.0,1.0};
-        double outputs[] = {0.0,1.0,1.0,0.0};
-        inputs.resize(boost::extents[2][4]);
-    real_output.resize(boost::extents[4]);
-    int j=0;
-    for(int i=0;i<4;i++)
-    {
-        for(int k=0;k<2;k++)
-        {
-            inputs[k][i].data=values[j];
-            j++;
-        }
-        real_output[i].data = outputs[i];
+        NNP = tNN;
+        PP = tProb;
+        GP = tGene;
+        Input.resize(boost::extents[NNP.I_num][NNP.training_data_length]);
+        Output.resize(boost::extents[NNP.O_num][NNP.training_data_length]);
     }
-    
-    }
-
-// now genetics stuff
-void Neural::callgen(){
-    genetic prime;
-}
-
-genetic::genetic()          // meat and potatoes function
-{
-    int iter;
-    for( iter=0;iter<ini1.gen_cycle;iter++)
+   void Dash_Board::TrainingRegimenDesign(IO_array Input, IO_array Output)
     {
-        current.resize(boost::extents[ini1.popsize][ini1.wtqt]);
-        if(iter==0)                // if this is the first iteration, populate with randoms
+       int size = NNP.training_verify_percentage*NNP.training_data_length;
+       IO_array Itraining(boost::extents[NNP.I_num][size]);
+       IO_array Otraining(boost::extents[NNP.O_num][size]);
+        for(int i=0; i<size; i++)
         {
-            for(int j=0;j<ini1.popsize;j++)        // create individuals
+            for(int k=0; k<NNP.I_num; k++)
             {
-                for(int k=0;k<ini1.wtqt;k++)             // randomize the "genes" (weights in this case) for the entire chroma
-               {
-                    current[j][k].weight=RNG_normal( prob.RNG_SD );
-                }
+                Itraining[k][i].data = Input[k][i].data;
+                Itraining[k][i].time = Input[k][i].time;
+            }
+            
+            for(int k=0; k<NNP.O_num; k++)
+            {
+                Otraining[k][i].data = Output[k][i].data;
+                Otraining[k][i].time = Output[k][i].time;
             }
         }
-        else{    // ok, since we already did one iteration lets start THE CYCLE
+       for(int i=size; i<NNP.training_data_length; i++)
+       {
+            for(int k=0; k<NNP.I_num; k++)
+            {
+                Iverify[k][i].data = Input[k][i].data;
+                Iverify[k][i].time = Input[k][i].time;
+            }
+            
+            for(int k=0; k<NNP.O_num; k++)
+            {
+                Overify[k][i].data = Output[k][i].data;
+                Overify[k][i].time = Output[k][i].time;
+            }
+       }
+    }
 
-
-                /* plug our genes(weights) into the NN and get our error results as a fitness (1/RMS)*/
-                /*fitness normalization begins here TEST THIS*/
+   
+   void Neural_Network::CreateWeights()
+   {
+       current.resize(boost::extents[GP.popsize][NNP.wtqt]);
+   }
+   
+   void Neural_Network::WeightOrganization()
+   {    
+       int total_hidden_neurons = Dash_Board::NNP.contextual_neurons+Dash_Board::NNP.hidden_neurons;
+       Dash_Board::NNP.wtqt = (Dash_Board::NNP.I_num+1)*(total_hidden_neurons)+(total_hidden_neurons)*(Dash_Board::NNP.O_num+1);
+   }
+   
+   
+   double Neural_Network::Neural_Function(IO_array Input, IO_array Outputs, int training_itr, int individual_itr, weight_array weights)
+   {
+       double hidden_sum[Dash_Board::NNP.hidden_neurons]={0};
+       double Trial_Output[Dash_Board::NNP.O_num]={0};
+       int wt_ctr =0;
+       for(int i=0; i<Dash_Board::NNP.hidden_neurons;i++)
+       {
+           for(int k=0; k<Dash_Board::NNP.I_num;k++)
+           {
+               hidden_sum[i] += Input[k][training_itr].data*weights[individual_itr][wt_ctr++].weight;
+               assert(wt_ctr!=Dash_Board::NNP.wtqt);
+           }
+           hidden_sum[i] += 1*weights[individual_itr][wt_ctr++].weight;         //bias
+           hidden_sum[i] = 1/(1+exp(-hidden_sum[i]));
+       }
+       for(int i=0; i<Dash_Board::NNP.O_num;i++)
+       {
+           for(int k=0; k<Dash_Board::NNP.hidden_neurons; k++)
+           {
+               Trial_Output[i] += hidden_sum[k]*weights[individual_itr][wt_ctr++].weight;
+           }
+           Trial_Output[i] += 1*weights[individual_itr][wt_ctr++].weight;
+           Trial_Output[i] = 1/(1+exp(-hidden_sum[i]));
+       }
+       
+   }
+/*
                 double sfit_sum;
                 int numerize=0;
                 double best_fit;
@@ -120,30 +139,29 @@ genetic::genetic()          // meat and potatoes function
 
 
                 /*sorting algorithm starts here TESTED, WORKS AS INTENDED*/
+                double temporary[ini1.popsize];
                     for( int n=0;n<ini1.popsize;n++)
                     {
                          best_fit=0;
                         for( int x=0;x<ini1.popsize;x++)
                         {
-                            if(current[x][0].eligible_sort==true)
-                                if(current[x][0].sfitness>best_fit)
-                                    best_fit=current[x][0].sfitness;
+                            if(current[x][0].sfitness>best_fit)
+                              best_fit=current[x][0].sfitness;
                         }
                         for ( int x=0;x<ini1.popsize;x++)        // go back through the list and find the best
                         {
                             if(current[x][0].sfitness==best_fit)
                             {
-                                current[x][0].order = numerize;
-                                current[x][0].eligible_sort = false; //set illegible for future sorting
-                                numerize++;
-                            }
-                            if(ini1.popsize<=numerize){
-                                std::cout<<"error: two or more genes are identical."<<endl;
-                                        break;
+                                temporary[n]=current[x][0];
+                                current[x][0].sfitness=-1;
                             }
                             
                         }
                     }
+                for(int n=0;n<ini1.popsize;n++)         //lets put them back in order
+                {
+                    current[n][0]=temporary[n];
+                }
                 /*sorting algorithim stops here*/
                 
                 
