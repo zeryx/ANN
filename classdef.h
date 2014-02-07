@@ -8,57 +8,52 @@
 #ifndef CLASSDEF_H
 #define	CLASSDEF_H
 #include "structs.h"
-#include <string>
-static ini ini1;
-    class Neural{
-    public:
-        typedef boost::multi_array<Input, 2> in_array;
-        typedef boost::multi_array<Input, 1> out_array;
-        in_array inputs;         //input data storage
-        out_array real_output;
-        Neural(int , int , int ,int , int , int ,int);
-        Neural();
-        virtual ~Neural();
-        void callgen();         //calls the genetics class to iterate until weights have been set
-        void increment();       //will increment the values of the inputs as we're now done with the current data
-        void prepare();           //gets the inputs in the right format
-
+class Dash_Board{
+private:
+    static void TrainingDataInitializer(double data, int IO_number, bool IO_indicator, double time);      // adds IO data to the static arrays
+    static void TrainingRegimenDesign();
+    static void CreateStructures(NeuralNetwork_Parameters tNN, Probability_Parameters tProb, Genetic_Parameters tGene);
+public:
+    typedef boost::multi_array<Training_Data, 2> IO_array;
+    static IO_array Itraining;
+    static IO_array Otraining;
+    static IO_array Iverify;
+    static IO_array Overify;
+    static NeuralNetwork_Parameters NNP;
+    static Probability_Parameters PP;
+    static Genetic_Parameters GP;
+    virtual ~Dash_Board()=0;
+    
+};
+    class Neural_Network: public Dash_Board{
     private:
+        static void CreateWeights();
+        static void WeightOrganization();
+        static double Neural_Function(IO_array Input, IO_array Outputs, int training_itr, int individual_itr, weight_array weights);
+    public:
+        typedef boost::multi_array<Weights, 2> weight_array;
+        static weight_array current;
+        virtual ~Dash_Board()=0;
     };
 
-    class genetic{
-    public:
-        typedef boost::multi_array<individual, 2> current_array;
-        current_array current;
-        individual best_pop;
-        genetic();
-        bool Parent_Chooser(int order, int population_size, double lamda);
-        
-        /* main genetic algo loop. creates initial pop, creates chroma from randomized weights
-                      * then throws the individual into the RNNtion and the RMS thats returned
-                      * is turned into a fitness, which is then scaled.
-                      * The best individuals probably breed and their chroma is switched around based on probability
-                      * and they could be mutated (low percentage of it though)
-                      * keeps iterating till either gen_cycle is reached, or RMS of current best individual is sufficiently low*/
-        double RNG_normal(double standard_deviation);
-        bool RANDOM(double probability);
-        virtual ~genetic();
+    class Genetics : public Neural_Network{
     private:
-        
-        
-        
+        typedef boost::multi_array<Weights, 1> weight_array;
+        static void MainLoop();
+        static void FitnessNormalization();
+        static void Sort();
+        static void ParentSelection();
+        static void Reproduction();
+        static void Mutation();
+    public:
+        static weight_array best_pop;
+        virtual ~Genetics()=0;
     };
-    class RNN : public Neural, public genetic
+    class Random
     {
     public:
-        double fitness;
-        RNN(int person_num, int layer_num, int num_hidden, int innum, int data_size, int wtqty);
-        virtual ~RNN();
-        void createfitness();
-        double outputfit();
-    private:
-        double Activation_sig(double X);
-        
+       static double RNGNormalDistribution(double standard_deviation);
+       static bool BooleanRandom(double probability);
     };
 
 #endif	/* CLASSDEF_H */
