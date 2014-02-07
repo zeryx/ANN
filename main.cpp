@@ -13,12 +13,12 @@
 #include "classdef.h"
 #include "members.h"
 
-double Activation_sig(double X);
 
 int main() {
-    Neural test(4, 1, 1, 100, 0.0001, 1000, 10^-6);
-    test.prepare();
-    test.callgen();
+    NeuralNetwork_Parameters nnp_temp;
+    Genetic_Parameters gp_temp;
+    Probability_Parameters pp_temp;
+    
     return 0;
 }
 
